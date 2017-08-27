@@ -56,7 +56,7 @@ def create_dataset(dataset, look_back=1):
 
 	
 # reshape into X=t and Y=t+1
-look_back = 2
+look_back = 5
 train_X, train_Y = create_dataset(training_set, look_back)
 test_X, test_Y = create_dataset(test_set, look_back)
 
@@ -65,11 +65,12 @@ test_X, test_Y = create_dataset(test_set, look_back)
 #trainX, trainY = create_dataset(train, look_back)
 #testX, testY = create_dataset(test, look_back)
 
-print (train_X.shape)
-print (test_X.shape)
+
 # reshape input to be [samples, time steps, features]
 train_X = np.reshape(train_X, (train_X.shape[0],1, train_X.shape[1]))
 test_X = np.reshape(test_X, (test_X.shape[0],1, test_X.shape[1]))
+print (train_X.shape)
+print (test_X.shape)
 
 print( train_X[0])
 
@@ -81,18 +82,21 @@ from keras.layers import LSTM
 
 
 model = Sequential()
-model.add(LSTM(20, input_shape=(1,2)))
+model.add(LSTM(20, batch_input_shape=(1,1,5), stateful=True, return_sequences=True))
+model.add(LSTM(20, batch_input_shape=(1,1,5), stateful=True))
+model.add(Dense(10))
+model.add(Dense(5))
 model.add(Dense(1))
 model.compile(loss='mean_squared_error', optimizer='adam')
-model.fit(train_X,train_Y , nb_epoch=100, batch_size=1, verbose=2)
+model.fit(train_X,train_Y , nb_epoch=60, batch_size=1, verbose=2)
 
 # make predictions
-trainPredict = model.predict(train_X)
+trainPredict = model.predict(train_X,batch_size=1)
 model.reset_states()
-testPredict = model.predict(test_X)
+testPredict = model.predict(test_X,batch_size=1)
 
-for i in range (len(trainPredict)):
-    print ( trainPredict[i], train_Y[i])
+#for i in range (len(trainPredict)):
+#    print ( trainPredict[i], train_Y[i])
 print (trainPredict.shape)
 print (train_Y.shape)
 import math
