@@ -9,7 +9,7 @@ spots = df['sunspots'].values
 
 print (len(spots))
 
-#print (spots[0])
+print (spots[0:10])
 #print (spots[len(spots)-2])
 
 def count_nans(x):
@@ -26,8 +26,8 @@ spots=np.nan_to_num(spots)
 
 #Dataset is ready cleaned -- Visualize
 import matplotlib.pyplot as plt
-plt.plot(spots)
-plt.show()
+#plt.plot(spots)
+#plt.show()
 
 np.random.seed(7)
 spots = spots.astype('float32')
@@ -36,13 +36,13 @@ train_len = int(len(spots)*0.8)
 test_len  = int(len(spots)*0.2)
 
 training_set = spots[0:train_len]
-test_set     = spots[train_len:test_len]
+test_set     = spots[train_len:train_len+test_len]
 print (len(training_set), len(test_set))
 
-train_X= training_set[0:train_len-1]
-train_Y= training_set[1:train_len]
-test_X=test_set[0:len(test_set)-1]
-test_Y=test_set[1:len(test_set)]
+#train_X= training_set[0:train_len-1]
+#train_Y= training_set[1:train_len]
+#test_X=test_set[0:len(test_set)-1]
+#test_Y=test_set[1:len(test_set)]
 
 # convert an array of values into a dataset matrix
 def create_dataset(dataset, look_back=1):
@@ -52,21 +52,28 @@ def create_dataset(dataset, look_back=1):
 		dataX.append(a)
 		dataY.append(dataset[i + look_back])
 	return np.array(dataX), np.array(dataY)
-3
-4
+
+
 	
 # reshape into X=t and Y=t+1
-look_back = 1
-#train_X, train_Y = create_dataset(training_set, look_back)
-#test_X, test_Y = create_dataset(test_set, look_back)
+look_back = 2
+train_X, train_Y = create_dataset(training_set, look_back)
+test_X, test_Y = create_dataset(test_set, look_back)
 
 # reshape into X=t and Y=t+1
 #look_back = 1
 #trainX, trainY = create_dataset(train, look_back)
 #testX, testY = create_dataset(test, look_back)
+
+print (train_X.shape)
+print (test_X.shape)
 # reshape input to be [samples, time steps, features]
-train_X = np.reshape(train_X, (train_X.shape[0], 1))
-test_X = np.reshape(test_X, (test_X.shape[0], 1))
+train_X = np.reshape(train_X, (train_X.shape[0],1, train_X.shape[1]))
+test_X = np.reshape(test_X, (test_X.shape[0],1, test_X.shape[1]))
+
+print( train_X[0])
+
+#exit()
 
 from keras.models import Sequential
 from keras.layers import Dense
@@ -74,18 +81,38 @@ from keras.layers import LSTM
 
 
 model = Sequential()
-model.add(LSTM(3, input_shape=(1,1)))
+model.add(LSTM(20, input_shape=(1,2)))
 model.add(Dense(1))
 model.compile(loss='mean_squared_error', optimizer='adam')
 model.fit(train_X,train_Y , nb_epoch=100, batch_size=1, verbose=2)
 
 # make predictions
 trainPredict = model.predict(train_X)
+model.reset_states()
 testPredict = model.predict(test_X)
 
+for i in range (len(trainPredict)):
+    print ( trainPredict[i], train_Y[i])
+print (trainPredict.shape)
+print (train_Y.shape)
+import math
+from sklearn.metrics import mean_squared_error
 # calculate root mean squared error
-trainScore = math.sqrt(mean_squared_error(train_Y[0], trainPredict[:,0]))
+trainScore = math.sqrt(mean_squared_error(train_Y, trainPredict[:,0]))
 print('Train Score: %.2f RMSE' % (trainScore))
-testScore = math.sqrt(mean_squared_error(test_Y[0], testPredict[:,0]))
+testScore = math.sqrt(mean_squared_error(test_Y, testPredict[:,0]))
 print('Test Score: %.2f RMSE' % (testScore))
 
+
+# make predictions
+#trainPredict = model.predict(trainX, batch_size=1)
+#model.reset_states()
+#testPredict = model.predict(testX, batch_size=1)
+plt.plot(train_Y)
+plt.plot(trainPredict[:,0])
+
+plt.show()
+
+plt.plot(test_Y)
+plt.plot(testPredict[:,0])
+plt.show()
